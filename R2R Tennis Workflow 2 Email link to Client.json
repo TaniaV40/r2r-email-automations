@@ -1,0 +1,132 @@
+{
+  "name": "R2R Tennis Workflow 2 Email link to Client",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1,
+                4
+              ],
+              "triggerAtHour": 5
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -240,
+        -16
+      ],
+      "id": "af55c26f-cbcd-4fa7-80ac-c04daf52cbe9",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "sendTo": "richard@r2rtennis.co.uk, alex@r2rtennis.co.uk",
+        "subject": "={{ $json.Subject }}",
+        "message": "=<p>Hi Richard & Alex,</p>\n<p>Just a quick note to let you know the order spreadsheet has been updated with a new order.</p>\n<p>You can access it using the link below:</p>\n\n<p>\n  <a href='{{ ($json[\"GoogleSheet URL\"] || \"\").trim() }}'\n     style=\"display:inline-block;padding:12px 18px;border-radius:6px;text-decoration:none;background:#1a73e8;color:#ffffff;\">\n    Open Order Spreadsheet\n  </a>\n</p>\n\n<p style=\"word-break:break-all;\">{{ ($json[\"GoogleSheet URL\"] || \"\").trim() }}</p>\n\n<p>If you’d like to download a copy, go to <strong>File → Download → Microsoft Excel</strong>.</p>\n<p>Kind regards,<br><strong>Tania Vorster</strong><br>Series Media</p>\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        192,
+        -16
+      ],
+      "id": "463e2aad-a438-427f-bafc-fcfc09cecab3",
+      "name": "Send a message",
+      "webhookId": "142790d2-f582-438d-8c3c-6c277d893124",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "O757lkgw0CC1Ksc8",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8edb48c3-0cb0-4320-a491-df1bab84779e",
+              "name": "Subject",
+              "value": "Updated R2R Order Sheet",
+              "type": "string"
+            },
+            {
+              "id": "539fe135-9f58-458e-9795-c899293b6db6",
+              "name": "GoogleSheet URL",
+              "value": "https://docs.google.com/spreadsheets/d/1iKNTgq7iLAyYDRAO6dOUn4H1Nso-N-wTrG-7btQYfOM/edit?usp=sharing",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -32,
+        -16
+      ],
+      "id": "c1685787-b015-4833-a118-7798a58a8122",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "b6db69bf-80f8-489f-ace5-103c3fac3757",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "10eb605ac83ce9887f461325f742975a92c1a693efcbbf155f08a35627563804"
+  },
+  "id": "FkGiVqi7jpyHKgL9",
+  "tags": [
+    {
+      "updatedAt": "2025-11-04T12:04:05.312Z",
+      "createdAt": "2025-11-04T12:04:05.312Z",
+      "id": "UGRZs8CdrekQ45HA",
+      "name": "R2R Tennis"
+    },
+    {
+      "updatedAt": "2025-11-17T08:09:24.578Z",
+      "createdAt": "2025-11-17T08:09:24.578Z",
+      "id": "e22I9RP8sBiBXCPt",
+      "name": "Summary of Emails"
+    }
+  ]
+}

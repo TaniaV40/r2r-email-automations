@@ -1,0 +1,378 @@
+{
+  "name": "R2R Tennis Workflow 3 Email simmary to Client",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "months",
+              "triggerAtHour": 1
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -240,
+        -16
+      ],
+      "id": "6ac28f8d-401f-46c5-a63c-6d77e9fcc3dd",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "sendTo": "richard@r2rtennis.co.uk",
+        "subject": "={{ $json.Subject }}",
+        "message": "=<p>Hi Richard,</p>\n<p>Just a quick note to let you know the summary of the Month's orders are ready. Please click on the tab sheet called 'Monthly summary' to see a summary of the different venues, but only on the first of each month will it be available. </p>\n<p>You can access it using the link below:</p>\n\n<p>\n  <a href='{{ ($json[\"GoogleSheet URL\"] || \"\").trim() }}'\n     style=\"display:inline-block;padding:12px 18px;border-radius:6px;text-decoration:none;background:#1a73e8;color:#ffffff;\">\n    Open Order Spreadsheet\n  </a>\n</p>\n\n<p style=\"word-break:break-all;\">{{ ($json[\"GoogleSheet URL\"] || \"\").trim() }}</p>\n\n<p>If you’d like to download a copy, go to <strong>File → Download → Microsoft Excel</strong>.</p>\n<p>Kind regards,<br><strong>Tania Vorster</strong><br>Series Media</p>\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        816,
+        -16
+      ],
+      "id": "9c929793-4622-4045-911d-b533316df91e",
+      "name": "Send a message",
+      "webhookId": "bd40c0d4-c516-4f45-a39e-55d968a7b4d6",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "O757lkgw0CC1Ksc8",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8edb48c3-0cb0-4320-a491-df1bab84779e",
+              "name": "Subject",
+              "value": "Updated R2R Order Sheet",
+              "type": "string"
+            },
+            {
+              "id": "539fe135-9f58-458e-9795-c899293b6db6",
+              "name": "GoogleSheet URL",
+              "value": "https://docs.google.com/spreadsheets/d/1iKNTgq7iLAyYDRAO6dOUn4H1Nso-N-wTrG-7btQYfOM/edit?usp=sharing",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        592,
+        -16
+      ],
+      "id": "9ca909d5-024b-4e33-ac30-7a8b7876eea5",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1iKNTgq7iLAyYDRAO6dOUn4H1Nso-N-wTrG-7btQYfOM",
+          "mode": "list",
+          "cachedResultName": "2025-01-05 _PROJECTS_Workflow_R2R Tennis Order Sheet ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iKNTgq7iLAyYDRAO6dOUn4H1Nso-N-wTrG-7btQYfOM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Master Sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iKNTgq7iLAyYDRAO6dOUn4H1Nso-N-wTrG-7btQYfOM/edit#gid=0"
+        },
+        "options": {
+          "outputFormatting": {
+            "values": {
+              "general": "UNFORMATTED_VALUE",
+              "date": "FORMATTED_STRING"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -32,
+        -16
+      ],
+      "id": "ea1fbda1-92c0-4541-ad03-816e896be4f4",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "A9wgEBGggGS4llOX",
+          "name": "Tania40.ai Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Grab all items from the Google Sheet\nconst allItems = $input.all(); \n\nconst summary = {\n  \"Kings Cliffe\": 0,\n  \"Padel\": 0,\n  \"Thrapston\": 0,\n  \"Uppingham\": 0,\n  \"Ketton\": 0,\n  \"Medbourne\": 0, // Added Medbourne\n  \"Individuals\": 0,\n  \"CAMP\": 0\n};\n\n// 2. Loop through every row\nfor (const item of allItems) {\n  const row = item.json;\n\n  // Helper to find the right column regardless of colons/spaces\n  const getVal = (name) => {\n    const key = Object.keys(row).find(k => k.toLowerCase().includes(name.toLowerCase()));\n    return key ? String(row[key]) : \"\";\n  };\n\n  const loc = getVal(\"Location\");\n  const type = getVal(\"Lesson Type\");\n  \n  // Find the price (looks for \"Total\" or \"£\")\n  const priceKey = Object.keys(row).find(k => k.includes(\"Total\") || k.includes(\"£\"));\n  const total = priceKey ? parseFloat(row[priceKey]) : 0;\n\n  // 3. IDENTIFY AND TOTAL\n  if (type.toLowerCase().includes(\"camp\")) {\n    summary[\"CAMP\"] += total;\n  } \n  else if (loc.includes(\"Kings Cliffe\")) summary[\"Kings Cliffe\"] += total;\n  else if (loc.includes(\"Thrapston\")) summary[\"Thrapston\"] += total;\n  else if (loc.includes(\"Uppingham\")) summary[\"Uppingham\"] += total;\n  else if (loc.includes(\"Ketton\")) summary[\"Ketton\"] += total;\n  else if (loc.includes(\"Medbourne\")) summary[\"Medbourne\"] += total; // Added Logic\n  else if (loc.includes(\"Padel\") || loc.includes(\"Manor\")) summary[\"Padel\"] += total;\n  else if (type.toLowerCase().includes(\"individual\")) summary[\"Individuals\"] += total;\n}\n\n// 4. Calculate a GRAND TOTAL of everything\nsummary[\"GRAND TOTAL\"] = Object.values(summary).reduce((a, b) => a + b, 0);\n\nreturn [{ json: summary }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        176,
+        -16
+      ],
+      "id": "fb651d3b-5a34-418a-bd46-4a10ac7227aa",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1iKNTgq7iLAyYDRAO6dOUn4H1Nso-N-wTrG-7btQYfOM",
+          "mode": "list",
+          "cachedResultName": "2025-01-05 _PROJECTS_Workflow_R2R Tennis Order Sheet ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iKNTgq7iLAyYDRAO6dOUn4H1Nso-N-wTrG-7btQYfOM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1390802618,
+          "mode": "list",
+          "cachedResultName": "Monthly Summary",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iKNTgq7iLAyYDRAO6dOUn4H1Nso-N-wTrG-7btQYfOM/edit#gid=1390802618"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "GRAND TOTAL": "={{ $json['GRAND TOTAL'] }}",
+            "Camps": "={{ $json.CAMP }}",
+            "Medbourne": "={{ $json.Medbourne }}",
+            "Individuals": "={{ $json.Individuals }}",
+            "Ketton": "={{ $json.Ketton }}",
+            "Uppingham": "={{ $json.Uppingham }}",
+            "Thrapston": "={{ $json.Thrapston }}",
+            "Padel": "={{ $json.Padel }}",
+            "Kings Cliffe": "={{ $json['Kings Cliffe'] }}",
+            "Month": "={{ $now.minus({months: 1}).format('MMMM yyyy') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Month",
+              "displayName": "Month",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Kings Cliffe",
+              "displayName": "Kings Cliffe",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Padel",
+              "displayName": "Padel",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Thrapston",
+              "displayName": "Thrapston",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Uppingham",
+              "displayName": "Uppingham",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Ketton",
+              "displayName": "Ketton",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Individuals",
+              "displayName": "Individuals",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Medbourne",
+              "displayName": "Medbourne",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Camps",
+              "displayName": "Camps",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "GRAND TOTAL",
+              "displayName": "GRAND TOTAL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        384,
+        -16
+      ],
+      "id": "433ea822-1d36-4256-ab90-907c9e9ede15",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "A9wgEBGggGS4llOX",
+          "name": "Tania40.ai Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "saveDataSuccessExecution": "all",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "errorWorkflow": "lgWlO7InIWQXrdwQ"
+  },
+  "versionId": "626406f4-9256-43b8-9310-e03664553bd9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "10eb605ac83ce9887f461325f742975a92c1a693efcbbf155f08a35627563804"
+  },
+  "id": "lgWlO7InIWQXrdwQ",
+  "tags": [
+    {
+      "updatedAt": "2025-11-04T12:04:05.312Z",
+      "createdAt": "2025-11-04T12:04:05.312Z",
+      "id": "UGRZs8CdrekQ45HA",
+      "name": "R2R Tennis"
+    },
+    {
+      "updatedAt": "2025-11-17T08:09:24.578Z",
+      "createdAt": "2025-11-17T08:09:24.578Z",
+      "id": "e22I9RP8sBiBXCPt",
+      "name": "Summary of Emails"
+    }
+  ]
+}
