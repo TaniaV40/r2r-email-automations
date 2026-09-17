@@ -8,6 +8,14 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
+// Normalize Vercel serverless function path rewrites
+app.use((req, _res, next) => {
+  if (req.url.startsWith('/src/index.ts')) {
+    req.url = req.url.replace('/src/index.ts', '') || '/';
+  }
+  next();
+});
+
 const PORT = process.env.PORT || 3002;
 
 // Health Check
